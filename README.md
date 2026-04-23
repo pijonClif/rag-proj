@@ -1,108 +1,61 @@
-# RAG-Based Customer Support Assistant
+# rag-cust-serv
 
-This project is a Retrieval-Augmented Generation (RAG) based customer support system built using LangGraph and Human-in-the-Loop (HITL).
+RAG-based customer support assistant using Groq LLaMA3, LangGraph, and ChromaDB. Answers queries from a PDF knowledge base and escalates low-confidence responses to a human agent.
 
-## 🚀 Features
+## Stack
 
-- Processes FAQ PDF documents
-- Stores embeddings using ChromaDB
-- Retrieves relevant information for user queries
-- Generates context-aware responses using LLM (Groq LLaMA 3.1)
-- Uses LangGraph for decision-based workflow
-- Escalates low-confidence queries to human support (HITL)
+- **LLM**: Groq LLaMA 3.1 8B Instant
+- **Embeddings**: HuggingFace `all-MiniLM-L6-v2`
+- **Vector store**: ChromaDB
+- **Orchestration**: LangGraph
+- **Document loader**: LangChain + PyPDF
 
-## 🧠 Tech Stack
+## Structure
 
-- Python
-- LangChain
-- LangGraph
-- ChromaDB
-- Groq API
-
-## 📂 Project Structure
 ```
-RAG_System_Project/
-├── ingest.py
-├── rag_pipeline.py
-├── graph_workflow.py
-├── hitl.py
-├── faq.pdf
-├── main.py
-```
----
-
-## ▶️ How to Run
-
-1. Install dependencies:
-   ```
-   pip install langchain langchain-community langchain-groq
-   pip install langchain-huggingface langchain-chroma
-   pip install chromadb sentence-transformers pypdf langgraph
-   ```
-2. Create a Virtual Environment
-   ```
-   python -m venv rag_env
-
-   # Windows
-   rag_env\Scripts\activate
-
-   # Mac/Linux
-   source rag_env/bin/activate
-   ```
-3. Add Your Groq API Key
-Open rag_pipeline.py and replace:
-   ```
-   GROQ_API_KEY = "your_groq_api_key_here"
-   ```
-4. Add Your FAQ PDF
-Place your FAQ document in the project folder and name it:
-  ```
-  faq.pdf
-  ```
-5. Running the Project:
-   ```
-   python main.py
-   ```
-On first run, the system will automatically ingest the PDF and build the knowledge base.
-
----
-   
-## 🔀 LangGraph Workflow
+app/
+  main.py            # Entry point and chat loop
+  ingest.py          # PDF ingestion and embedding pipeline
+  rag_pipeline.py    # Retrieval and answer generation
+  graph_workflow.py  # LangGraph nodes and routing logic
+  hitl.py            # Human-in-the-loop escalation
+docs/
+  faq.pdf            # Source knowledge base
+data/
+  chroma_db/         # Persisted vector store
+  escalation_log.json
 ```
 
-[START]
-   ↓
-[Input: User Query]
-   ↓
-[Node 1: Process Query]
-(Retrieve relevant chunks + Generate answer using LLM)
-   ↓
-[Decision: Is response confident?]
-   ↓                      ↓
-[Yes]                    [No]
-   ↓                      ↓
-[Node 2: Output]        [Node 3: Escalate (HITL)]
-(Return answer)         (Log query + Notify human)
-   ↓                      ↓
-[END]                  [END]
+## Setup
+
+```bash
+pip install -r requirements.txt
 ```
----
 
-## 👤 HITL Escalation
-When the system cannot answer confidently it:
+Add a `.env` file:
 
-1. 🚨 Logs the query with timestamp and reason
-2. 📋 Saves it to escalation_log.json
-3. 🔔 Notifies a human agent in the terminal
-4. 💬 Returns an escalation ID to the user
-
-To view all pending escalations:
 ```
-You: escalations
+GROQ_API_KEY=your_key_here
 ```
----
 
-👩‍💻 Author
-Samruddhi Khedkar
-Agentic AI Intern — Innomatics Research Labs
-BTech Electronics & Telecommunication Engineering
+Place your FAQ PDF at `docs/faq.pdf`.
+
+## Usage
+
+```bash
+python main.py
+```
+
+**Commands during chat:**
+
+| Command | Action |
+|---|---|
+| `quit` | Exit |
+| `escalations` | View pending human escalations |
+| `reingest` | Reload the PDF knowledge base |
+
+## How it works
+
+1. On first run, `ingest.py` loads `faq.pdf`, splits it into chunks, and stores embeddings in ChromaDB.
+2. Each query goes through a LangGraph workflow: retrieve relevant chunks, generate an answer, and route based on confidence.
+3. Confident answers are returned directly. Low-confidence answers are logged and escalated to a human agent with a 24-hour SLA.
